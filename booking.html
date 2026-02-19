@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Turf | PlayMate</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .booking-page {
+            margin-top: 90px;
+            padding-bottom: 60px;
+        }
+
+        .turf-img {
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(45deg, #111, #222);
+            border-top-left-radius: 20px;
+            border-top-right-radius: 20px;
+        }
+
+        .slot-btn {
+            border: 1px solid var(--neon-green);
+            color: var(--neon-green);
+            margin: 5px;
+            border-radius: 10px;
+            background: transparent;
+            transition: all 0.3s;
+            padding: 8px 16px;
+            cursor: pointer;
+        }
+
+        .slot-btn:hover,
+        .slot-btn.active {
+            background-color: var(--neon-green);
+            color: black;
+            font-weight: bold;
+            box-shadow: 0 0 15px var(--neon-green);
+        }
+
+        .slot-btn.booked {
+            border-color: #ff5555;
+            color: #ff5555;
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .filter-row {
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold d-flex align-items-center" href="index.html">
+                <img src="logo.png" width="40" height="40" class="me-2"> PlayMate
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="match.html">Find Players</a></li>
+                    <li class="nav-item"><a class="nav-link" href="events.html">🔴 Events</a></li>
+                    <li class="nav-item"><a class="nav-link" href="chat.html">💬 Chat</a></li>
+                    <ul id="navAuthArea" class="navbar-nav"></ul>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container booking-page">
+        <h2 class="fw-bold mb-4">Select Ground</h2>
+
+        <div class="row filter-row g-3">
+            <div class="col-md-4">
+                <select class="form-select" id="filterLocation">
+                    <option selected value="">All Locations</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <input type="date" class="form-control" id="filterDate" style="color-scheme: dark;">
+            </div>
+        </div>
+
+        <div class="row" id="turfsGrid">
+            <div class="col-12 text-center py-5">
+                <div class="spinner-border" style="color: var(--neon-green);" role="status"></div>
+                <p class="text-muted mt-3">Loading turfs...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Booking Modal -->
+    <div class="modal fade" id="bookingModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title">Book Slot: <span id="modalTurfName" style="color: var(--neon-green)"></span>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <p class="text-muted">Slots for <strong id="modalDate"></strong>:</p>
+                    <div class="d-flex flex-wrap justify-content-center gap-2" id="slotsContainer">
+                        <p class="text-muted">Loading slots...</p>
+                    </div>
+                    <div id="loginPrompt" style="display: none;" class="mt-3">
+                        <p class="text-warning small">⚠️ You need to log in to book a slot</p>
+                        <a href="login.html" class="btn btn-success btn-sm">Login / Register</a>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" id="confirmBtn" onclick="confirmBooking()">Confirm
+                        Booking</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Toast -->
+    <div class="position-fixed top-0 end-0 p-3" style="z-index: 9999;">
+        <div id="successToast" class="toast align-items-center border-0" role="alert"
+            style="background: var(--neon-green); color: black;">
+            <div class="d-flex">
+                <div class="toast-body fw-bold" id="toastMsg">Booking Confirmed!</div>
+                <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="auth.js"></script>
+    <script>
+        AUTH.updateNavbar();
+
+        let allTurfs = [];
+        let selectedTurf = null;
+        let selectedSlot = null;
+
+        // Set today as default date
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('filterDate').value = today;
+
+        // Load turfs
+        async function loadTurfs() {
+            try {
+                const res = await fetch('/api/turfs');
+                allTurfs = await res.json();
+
+                // Populate location filter
+                const locations = [...new Set(allTurfs.map(t => t.location))];
+                const filterEl = document.getElementById('filterLocation');
+                locations.forEach(loc => {
+                    const opt = document.createElement('option');
+                    opt.value = loc; opt.textContent = loc;
+                    filterEl.appendChild(opt);
+                });
+
+                renderTurfs();
+            } catch (err) {
+                document.getElementById('turfsGrid').innerHTML = '<div class="col-12 text-center py-5"><p class="text-danger">Failed to load turfs</p></div>';
+            }
+        }
+
+        function renderTurfs() {
+            const filter = document.getElementById('filterLocation').value;
+            const turfs = filter ? allTurfs.filter(t => t.location === filter) : allTurfs;
+            const grid = document.getElementById('turfsGrid');
+
+            if (turfs.length === 0) {
+                grid.innerHTML = '<div class="col-12 text-center py-5"><p class="text-muted">No turfs found</p></div>';
+                return;
+            }
+
+            grid.innerHTML = turfs.map(t => `
+                <div class="col-md-4 mb-4">
+                    <div class="card turf-card h-100 p-0">
+                        <div class="turf-img">
+                            <h1 style="font-size: 4rem;">${t.emoji}</h1>
+                        </div>
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between">
+                                <h5 class="card-title fw-bold">${t.name}</h5>
+                                <span class="badge bg-success text-dark">₹${t.price_per_hour}/hr</span>
+                            </div>
+                            <p class="text-muted small">📍 ${t.location}</p>
+                            <p class="card-text small mb-4">${t.description || t.formats + ' available.'}</p>
+                            <button class="btn btn-outline-dark w-100" onclick="openBooking(${t.id}, '${t.name}')">View Slots</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        document.getElementById('filterLocation').addEventListener('change', renderTurfs);
+
+        // Open booking modal
+        async function openBooking(turfId, turfName) {
+            selectedTurf = turfId;
+            selectedSlot = null;
+            document.getElementById('modalTurfName').textContent = turfName;
+
+            const date = document.getElementById('filterDate').value || today;
+            document.getElementById('modalDate').textContent = date;
+
+            const modal = new bootstrap.Modal(document.getElementById('bookingModal'));
+            modal.show();
+
+            // Check login
+            if (!AUTH.isLoggedIn()) {
+                document.getElementById('slotsContainer').innerHTML = '';
+                document.getElementById('loginPrompt').style.display = 'block';
+                document.getElementById('confirmBtn').style.display = 'none';
+                return;
+            }
+            document.getElementById('loginPrompt').style.display = 'none';
+            document.getElementById('confirmBtn').style.display = 'block';
+
+            // Load slots
+            document.getElementById('slotsContainer').innerHTML = '<div class="spinner-border spinner-border-sm" style="color: var(--neon-green);"></div>';
+
+            try {
+                const res = await fetch(`/api/turfs/${turfId}/slots?date=${date}`, { headers: AUTH.headers() });
+                const data = await res.json();
+
+                document.getElementById('slotsContainer').innerHTML = data.slots.map(s => `
+                    <button class="btn slot-btn ${s.available ? '' : 'booked'}"
+                        ${s.available ? '' : 'disabled'}
+                        onclick="selectSlot(this, '${s.time}')">
+                        ${s.time} ${s.available ? '' : '(Booked)'}
+                    </button>
+                `).join('');
+            } catch (err) {
+                document.getElementById('slotsContainer').innerHTML = '<p class="text-danger">Failed to load slots</p>';
+            }
+        }
+
+        function selectSlot(btn, time) {
+            document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            selectedSlot = time;
+        }
+
+        async function confirmBooking() {
+            if (!selectedSlot) { alert('Please select a time slot'); return; }
+            if (!AUTH.isLoggedIn()) { window.location.href = 'login.html'; return; }
+
+            const btn = document.getElementById('confirmBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Booking...';
+
+            try {
+                const date = document.getElementById('filterDate').value || today;
+                const res = await fetch('/api/bookings', {
+                    method: 'POST',
+                    headers: AUTH.headers(),
+                    body: JSON.stringify({ turf_id: selectedTurf, date, slot: selectedSlot })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error);
+
+                // Close modal
+                bootstrap.Modal.getInstance(document.getElementById('bookingModal')).hide();
+
+                // Show success toast
+                document.getElementById('toastMsg').textContent = `✅ ${data.message} — ${selectedSlot}`;
+                new bootstrap.Toast(document.getElementById('successToast')).show();
+
+                btn.disabled = false;
+                btn.textContent = 'Confirm Booking';
+            } catch (err) {
+                alert(err.message);
+                btn.disabled = false;
+                btn.textContent = 'Confirm Booking';
+            }
+        }
+
+        // Date change reloads if modal is open
+        document.getElementById('filterDate').addEventListener('change', () => {
+            if (selectedTurf) {
+                const name = document.getElementById('modalTurfName').textContent;
+                openBooking(selectedTurf, name);
+            }
+        });
+
+        loadTurfs();
+    </script>
+</body>
+
+</html>

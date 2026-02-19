@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Events | PlayMate</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .events-page {
+            margin-top: 90px;
+            padding-bottom: 60px;
+        }
+
+        .event-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 0;
+            overflow: hidden;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .event-card:hover {
+            border-color: rgba(57, 255, 20, 0.3);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .event-card-header {
+            padding: 20px 24px 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .event-card-body {
+            padding: 16px 24px 24px;
+        }
+
+        .format-badge {
+            display: inline-block;
+            padding: 3px 12px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            background: rgba(57, 255, 20, 0.1);
+            border: 1px solid rgba(57, 255, 20, 0.3);
+            color: var(--neon-green);
+        }
+
+        .spots-bar {
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.08);
+            overflow: hidden;
+        }
+
+        .spots-fill {
+            height: 100%;
+            border-radius: 3px;
+            background: var(--neon-green);
+            transition: width 0.5s ease;
+        }
+
+        .spots-fill.almost-full {
+            background: #ffc800;
+        }
+
+        .spots-fill.full {
+            background: #ff5555;
+        }
+
+        .host-tag {
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.4);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .player-avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: rgba(57, 255, 20, 0.15);
+            border: 1px solid rgba(57, 255, 20, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--neon-green);
+            margin-left: -8px;
+        }
+
+        .player-avatar:first-child {
+            margin-left: 0;
+        }
+
+        .empty-avatar {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.15);
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        .join-btn {
+            border: none;
+            padding: 10px 24px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+        }
+
+        .join-btn.open {
+            background: var(--neon-green);
+            color: black;
+        }
+
+        .join-btn.open:hover {
+            box-shadow: 0 0 20px rgba(57, 255, 20, 0.4);
+            transform: scale(1.02);
+        }
+
+        .join-btn.joined {
+            background: rgba(57, 255, 20, 0.15);
+            color: var(--neon-green);
+            border: 1px solid rgba(57, 255, 20, 0.3);
+        }
+
+        .join-btn.full {
+            background: rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.3);
+            cursor: not-allowed;
+        }
+
+        .host-form-card {
+            max-width: 600px;
+            margin: 0 auto 50px;
+        }
+
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ff3333;
+            display: inline-block;
+            animation: pulse-dot 1.5s infinite;
+            margin-right: 6px;
+        }
+
+        @keyframes pulse-dot {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.3;
+            }
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        .event-time-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .no-login-cta {
+            text-align: center;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="preloader"><img src="logo.png" alt="Loading..." class="preloader-logo"></div>
+
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold d-flex align-items-center" href="index.html">
+                <img src="logo.png" width="40" height="40" class="me-2"> PlayMate
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="match.html">Find Players</a></li>
+                    <li class="nav-item"><a class="nav-link" href="booking.html">Book Turf</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="events.html">Events</a></li>
+                    <li class="nav-item"><a class="nav-link" href="chat.html">💬 Chat</a></li>
+                    <ul id="navAuthArea" class="navbar-nav"></ul>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container events-page">
+
+        <!-- Host a Game Section (logged in only) -->
+        <div id="hostSection" style="display: none;">
+            <div class="form-container host-form-card p-4">
+                <h4 class="fw-bold text-center mb-1" style="color: var(--neon-green);">HOST A GAME</h4>
+                <p class="text-center text-muted small mb-4">Got players? Need more? Set up a pickup game.</p>
+                <form id="hostForm">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Game Title</label>
+                            <input type="text" class="form-control" id="eventTitle"
+                                placeholder="e.g. Sunday 5v5 at Kick Off" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Turf (optional)</label>
+                            <select class="form-select" id="eventTurf">
+                                <option value="">Not decided yet</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Format</label>
+                            <select class="form-select" id="eventFormat">
+                                <option value="5v5">5v5 (10 players)</option>
+                                <option value="6v6">6v6 (12 players)</option>
+                                <option value="7v7">7v7 (14 players)</option>
+                                <option value="Custom">Custom</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Date</label>
+                            <input type="date" class="form-control" id="eventDate" style="color-scheme: dark;" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Time</label>
+                            <input type="time" class="form-control" id="eventTime" style="color-scheme: dark;" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Total Players Needed</label>
+                            <input type="number" class="form-control" id="eventSlots" min="2" max="22" value="10">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Description (optional)</label>
+                            <input type="text" class="form-control" id="eventDesc"
+                                placeholder="Skill level, any rules, etc.">
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-success btn-lg w-100" id="hostBtn">🎯 HOST THIS
+                                GAME</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Not logged in CTA -->
+        <div id="noLoginCta" class="no-login-cta form-container" style="display: none;">
+            <h1 style="font-size: 3rem;">🏟️</h1>
+            <h5 class="fw-bold mb-2">Want to host a game?</h5>
+            <p class="text-muted mb-3">Login to create or join pickup games</p>
+            <a href="login.html" class="btn btn-success px-4">LOGIN / REGISTER</a>
+        </div>
+
+        <!-- Live Events -->
+        <div class="section-header">
+            <span class="live-dot"></span>
+            <h3 class="fw-bold mb-0">LIVE UPCOMING EVENTS</h3>
+        </div>
+
+        <div id="eventsGrid" class="row g-4">
+            <div class="col-12 text-center py-5">
+                <div class="spinner-border" style="color: var(--neon-green);" role="status"></div>
+                <p class="text-muted mt-3">Loading events...</p>
+            </div>
+        </div>
+
+        <div id="emptyState" class="text-center py-5" style="display: none;">
+            <h1 style="font-size: 4rem;">🎮</h1>
+            <h4 class="fw-bold mb-2">No Upcoming Events</h4>
+            <p class="text-muted">Be the first to host a pickup game!</p>
+        </div>
+    </div>
+
+    <!-- Success Toast -->
+    <div class="position-fixed top-0 end-0 p-3" style="z-index: 9999;">
+        <div id="successToast" class="toast align-items-center border-0" role="alert"
+            style="background: var(--neon-green); color: black;">
+            <div class="d-flex">
+                <div class="toast-body fw-bold" id="toastMsg"></div>
+                <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="auth.js"></script>
+    <script>
+        // Preloader
+        window.addEventListener('load', function () {
+            const p = document.getElementById('preloader');
+            setTimeout(() => { p.style.opacity = '0'; setTimeout(() => p.style.display = 'none', 500); }, 500);
+        });
+
+        AUTH.updateNavbar();
+        const currentPlayerId = AUTH.getPlayer()?.id;
+
+        // Show host section or login CTA
+        if (AUTH.isLoggedIn()) {
+            document.getElementById('hostSection').style.display = 'block';
+        } else {
+            document.getElementById('noLoginCta').style.display = 'block';
+        }
+
+        // Set today as min date
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('eventDate').min = today;
+        document.getElementById('eventDate').value = today;
+
+        // Auto-set slots based on format
+        document.getElementById('eventFormat').addEventListener('change', function () {
+            const map = { '5v5': 10, '6v6': 12, '7v7': 14, 'Custom': 10 };
+            document.getElementById('eventSlots').value = map[this.value] || 10;
+        });
+
+        // Load turfs into select
+        async function loadTurfs() {
+            try {
+                const res = await fetch('/api/turfs');
+                const turfs = await res.json();
+                const select = document.getElementById('eventTurf');
+                turfs.forEach(t => {
+                    const opt = document.createElement('option');
+                    opt.value = t.id;
+                    opt.textContent = `${t.emoji} ${t.name} (${t.location})`;
+                    select.appendChild(opt);
+                });
+            } catch (e) { }
+        }
+
+        // Load events
+        async function loadEvents() {
+            try {
+                const res = await fetch('/api/events');
+                const events = await res.json();
+                const grid = document.getElementById('eventsGrid');
+
+                if (events.length === 0) {
+                    grid.innerHTML = '';
+                    document.getElementById('emptyState').style.display = 'block';
+                    return;
+                }
+
+                document.getElementById('emptyState').style.display = 'none';
+                grid.innerHTML = events.map((ev, i) => {
+                    const spotsLeft = ev.total_slots - ev.filled_slots;
+                    const fillPercent = (ev.filled_slots / ev.total_slots) * 100;
+                    const barClass = fillPercent >= 90 ? 'full' : fillPercent >= 70 ? 'almost-full' : '';
+
+                    // Check if current user already joined
+                    const isHost = currentPlayerId === ev.host_id;
+                    const hasJoined = ev.players?.some(p => p.player_id === currentPlayerId);
+                    const isFull = spotsLeft <= 0;
+
+                    // Player avatars
+                    const avatarCount = Math.min(ev.players?.length || 0, 5);
+                    const avatars = (ev.players || []).slice(0, 5).map(p =>
+                        `<div class="player-avatar" title="${p.name}">${p.name.charAt(0)}</div>`
+                    ).join('');
+                    const emptyCount = Math.min(spotsLeft, 3);
+                    const emptyAvatars = Array(emptyCount).fill('<div class="player-avatar empty-avatar">?</div>').join('');
+
+                    let btnHtml;
+                    if (isHost) {
+                        btnHtml = `<button class="join-btn joined" disabled>🎯 YOU'RE HOSTING</button>`;
+                    } else if (hasJoined) {
+                        btnHtml = `<button class="join-btn joined" onclick="leaveEvent(${ev.id})">✓ JOINED — TAP TO LEAVE</button>`;
+                    } else if (isFull) {
+                        btnHtml = `<button class="join-btn full" disabled>FULL</button>`;
+                    } else if (!AUTH.isLoggedIn()) {
+                        btnHtml = `<a href="login.html" class="join-btn open d-block text-center text-decoration-none">LOGIN TO JOIN</a>`;
+                    } else {
+                        btnHtml = `<button class="join-btn open" onclick="joinEvent(${ev.id})">⚡ JOIN GAME (${spotsLeft} left)</button>`;
+                    }
+
+                    const dateObj = new Date(ev.date + 'T' + ev.time);
+                    const dateStr = dateObj.toLocaleDateString('en-IN', { weekday: 'short', month: 'short', day: 'numeric' });
+                    const timeStr = dateObj.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+
+                    return `
+                        <div class="col-md-6 col-lg-4" style="animation: fadeIn 0.4s ease ${i * 0.08}s both;">
+                            <div class="event-card">
+                                <div class="event-card-header">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h5 class="fw-bold mb-0" style="font-size: 1rem;">${ev.title}</h5>
+                                        <span class="format-badge">${ev.format}</span>
+                                    </div>
+                                    <div class="d-flex gap-2 flex-wrap">
+                                        <span class="event-time-badge">📅 ${dateStr}</span>
+                                        <span class="event-time-badge">🕐 ${timeStr}</span>
+                                    </div>
+                                </div>
+                                <div class="event-card-body">
+                                    ${ev.turf_name ? `<p class="mb-2 small"><span style="opacity: 0.5">${ev.turf_emoji || '🏟️'}</span> <strong>${ev.turf_name}</strong> <span class="text-muted">• ${ev.turf_location}</span></p>` : ''}
+                                    ${ev.description ? `<p class="text-muted small mb-3">"${ev.description}"</p>` : ''}
+                                    
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <small class="fw-bold">${ev.filled_slots}/${ev.total_slots} Players</small>
+                                            <small style="color: ${isFull ? '#ff5555' : spotsLeft <= 2 ? '#ffc800' : 'var(--neon-green)'}; font-weight: 700;">
+                                                ${isFull ? 'FULL' : spotsLeft + ' spot' + (spotsLeft > 1 ? 's' : '') + ' left'}
+                                            </small>
+                                        </div>
+                                        <div class="spots-bar">
+                                            <div class="spots-fill ${barClass}" style="width: ${fillPercent}%"></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="d-flex align-items-center mb-3">
+                                        ${avatars}${emptyAvatars}
+                                        ${(ev.players?.length || 0) > 5 ? `<small class="text-muted ms-2">+${ev.players.length - 5} more</small>` : ''}
+                                    </div>
+
+                                    <div class="host-tag mb-3">Hosted by ${ev.host_name} • Skill ${ev.host_skill}/10</div>
+
+                                    ${btnHtml}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (err) {
+                console.error(err);
+                document.getElementById('eventsGrid').innerHTML = '<div class="col-12 text-center py-5"><p class="text-danger">Failed to load events</p></div>';
+            }
+        }
+
+        // Join event
+        async function joinEvent(eventId) {
+            try {
+                const res = await fetch(`/api/events/${eventId}/join`, { method: 'POST', headers: AUTH.headers() });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error);
+
+                document.getElementById('toastMsg').textContent = data.message;
+                new bootstrap.Toast(document.getElementById('successToast')).show();
+                loadEvents();
+            } catch (err) { alert(err.message); }
+        }
+
+        // Leave event
+        async function leaveEvent(eventId) {
+            if (!confirm('Leave this game?')) return;
+            try {
+                const res = await fetch(`/api/events/${eventId}/leave`, { method: 'POST', headers: AUTH.headers() });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error);
+
+                loadEvents();
+            } catch (err) { alert(err.message); }
+        }
+
+        // Host form submit
+        document.getElementById('hostForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('hostBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>CREATING...';
+
+            try {
+                const body = {
+                    title: document.getElementById('eventTitle').value.trim(),
+                    turf_id: document.getElementById('eventTurf').value || null,
+                    format: document.getElementById('eventFormat').value,
+                    date: document.getElementById('eventDate').value,
+                    time: document.getElementById('eventTime').value,
+                    total_slots: parseInt(document.getElementById('eventSlots').value),
+                    description: document.getElementById('eventDesc').value.trim()
+                };
+
+                const res = await fetch('/api/events', {
+                    method: 'POST', headers: AUTH.headers(), body: JSON.stringify(body)
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error);
+
+                document.getElementById('hostForm').reset();
+                document.getElementById('eventDate').value = today;
+                document.getElementById('toastMsg').textContent = data.message;
+                new bootstrap.Toast(document.getElementById('successToast')).show();
+                loadEvents();
+            } catch (err) { alert(err.message); }
+
+            btn.disabled = false;
+            btn.textContent = '🎯 HOST THIS GAME';
+        });
+
+        // Init
+        loadTurfs();
+        loadEvents();
+    </script>
+</body>
+
+</html>

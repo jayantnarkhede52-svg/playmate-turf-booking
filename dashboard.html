@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | PlayMate</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .dashboard {
+            margin-top: 90px;
+            padding-bottom: 60px;
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .stat-val {
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: var(--neon-green);
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+        }
+
+        .conn-badge {
+            font-size: 0.65rem;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .conn-pending {
+            background: rgba(255, 200, 0, 0.15);
+            color: #ffc800;
+            border: 1px solid rgba(255, 200, 0, 0.3);
+        }
+
+        .conn-accepted {
+            background: rgba(57, 255, 20, 0.15);
+            color: var(--neon-green);
+            border: 1px solid rgba(57, 255, 20, 0.3);
+        }
+
+        .conn-rejected {
+            background: rgba(255, 50, 50, 0.15);
+            color: #ff5555;
+            border: 1px solid rgba(255, 50, 50, 0.3);
+        }
+
+        .edit-field {
+            display: none;
+        }
+
+        .booking-item {
+            border-left: 3px solid var(--neon-green);
+            padding-left: 15px;
+            margin-bottom: 12px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold d-flex align-items-center" href="index.html">
+                <img src="logo.png" width="40" height="40" class="me-2"> PlayMate
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="match.html">Find Players</a></li>
+                    <li class="nav-item"><a class="nav-link" href="booking.html">Book Turf</a></li>
+                    <li class="nav-item"><a class="nav-link" href="events.html">🔴 Events</a></li>
+                    <li class="nav-item"><a class="nav-link" href="chat.html">💬 Chat</a></li>
+                    <ul id="navAuthArea" class="navbar-nav"></ul>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container dashboard">
+        <!-- Profile Header -->
+        <div class="form-container p-4 mb-4">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                <div>
+                    <h2 class="fw-bold mb-1" id="profileName"></h2>
+                    <p class="text-muted mb-0">📍 <span id="profileZone"></span> • 📱 <span id="profilePhone"></span>
+                    </p>
+                </div>
+                <button class="btn btn-outline-light btn-sm" onclick="toggleEdit()">✏️ Edit Profile</button>
+            </div>
+            <div class="d-flex gap-3 mt-3">
+                <div class="stat-card card p-3 flex-fill">
+                    <div class="stat-val" id="profileSkill"></div>
+                    <div class="stat-label text-muted">Skill</div>
+                </div>
+                <div class="stat-card card p-3 flex-fill">
+                    <div class="stat-val" id="profilePosition"></div>
+                    <div class="stat-label text-muted">Position</div>
+                </div>
+                <div class="stat-card card p-3 flex-fill">
+                    <div class="stat-val" id="bookingCount">0</div>
+                    <div class="stat-label text-muted">Bookings</div>
+                </div>
+            </div>
+
+            <!-- Edit Form (hidden by default) -->
+            <div id="editSection" class="edit-field mt-4 pt-3" style="border-top: 1px solid rgba(255,255,255,0.1);">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Name</label>
+                        <input type="text" class="form-control" id="editName">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Zone</label>
+                        <select class="form-select" id="editZone">
+                            <option value="Patia">Patia / KIIT</option>
+                            <option value="Jaydev Vihar">Jaydev Vihar</option>
+                            <option value="Khandagiri">Khandagiri</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Skill Level</label>
+                        <input type="number" class="form-control" id="editSkill" min="1" max="10">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Position</label>
+                        <select class="form-select" id="editPosition">
+                            <option value="Any">Any</option>
+                            <option value="GK">GK</option>
+                            <option value="DEF">DEF</option>
+                            <option value="MID">MID</option>
+                            <option value="FWD">FWD</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Bio</label>
+                        <input type="text" class="form-control" id="editBio">
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <button class="btn btn-success" onclick="saveProfile()">Save Changes</button>
+                    <button class="btn btn-outline-light ms-2" onclick="toggleEdit()">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Bookings -->
+            <div class="col-md-6">
+                <div class="form-container p-4 h-100">
+                    <div class="section-title">🏟️ My Bookings</div>
+                    <div id="bookingsList">
+                        <p class="text-muted small">Loading...</p>
+                    </div>
+                    <a href="booking.html" class="btn btn-outline-light btn-sm mt-2">+ Book a Turf</a>
+                </div>
+            </div>
+
+            <!-- Connections -->
+            <div class="col-md-6">
+                <div class="form-container p-4 h-100">
+                    <div class="section-title">🤝 Connections</div>
+                    <div id="connectionsList">
+                        <p class="text-muted small">Loading...</p>
+                    </div>
+                    <a href="match.html" class="btn btn-outline-light btn-sm mt-2">Find Players</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- My Events -->
+        <div class="row g-4 mt-1">
+            <div class="col-12">
+                <div class="form-container p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="section-title mb-0">🎮 My Events</div>
+                        <a href="events.html" class="btn btn-outline-light btn-sm">Browse Events</a>
+                    </div>
+                    <div id="eventsList">
+                        <p class="text-muted small">Loading...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="auth.js"></script>
+    <script>
+        if (!AUTH.requireLogin()) throw new Error('redirect');
+        AUTH.updateNavbar();
+
+        const player = AUTH.getPlayer();
+        let currentPlayer = player;
+
+        // Load profile
+        async function loadProfile() {
+            try {
+                const res = await fetch('/api/auth/me', { headers: AUTH.headers() });
+                if (!res.ok) throw new Error();
+                currentPlayer = await res.json();
+                AUTH.save(AUTH.getToken(), currentPlayer);
+            } catch (e) { }
+
+            document.getElementById('profileName').textContent = currentPlayer.name;
+            document.getElementById('profileZone').textContent = currentPlayer.zone;
+            document.getElementById('profilePhone').textContent = currentPlayer.phone;
+            document.getElementById('profileSkill').textContent = currentPlayer.skill_level;
+            document.getElementById('profilePosition').textContent = currentPlayer.position;
+
+            // Populate edit fields
+            document.getElementById('editName').value = currentPlayer.name;
+            document.getElementById('editZone').value = currentPlayer.zone;
+            document.getElementById('editSkill').value = currentPlayer.skill_level;
+            document.getElementById('editPosition').value = currentPlayer.position;
+            document.getElementById('editBio').value = currentPlayer.bio || '';
+        }
+
+        // Load bookings
+        async function loadBookings() {
+            try {
+                const res = await fetch('/api/bookings/my', { headers: AUTH.headers() });
+                const bookings = await res.json();
+                const el = document.getElementById('bookingsList');
+                document.getElementById('bookingCount').textContent = bookings.length;
+
+                if (bookings.length === 0) {
+                    el.innerHTML = '<p class="text-muted small">No bookings yet. Book your first turf!</p>';
+                    return;
+                }
+
+                el.innerHTML = bookings.map(b => `
+                    <div class="booking-item">
+                        <div class="d-flex justify-content-between">
+                            <strong>${b.turf_emoji || '⚽'} ${b.turf_name}</strong>
+                            <span class="conn-badge ${b.status === 'confirmed' ? 'conn-accepted' : 'conn-rejected'}">${b.status}</span>
+                        </div>
+                        <small class="text-muted">${b.date} at ${b.slot} • ${b.turf_location}</small>
+                    </div>
+                `).join('');
+            } catch (err) {
+                document.getElementById('bookingsList').innerHTML = '<p class="text-muted small">Could not load bookings.</p>';
+            }
+        }
+
+        // Load connections
+        async function loadConnections() {
+            try {
+                const res = await fetch('/api/connections/my', { headers: AUTH.headers() });
+                const data = await res.json();
+                const el = document.getElementById('connectionsList');
+                const all = [];
+
+                data.incoming.forEach(c => all.push({
+                    id: c.id, type: 'incoming', name: c.from_name, zone: c.from_zone,
+                    skill: c.from_skill, position: c.from_position, status: c.status
+                }));
+                data.outgoing.forEach(c => all.push({
+                    id: c.id, type: 'outgoing', name: c.to_name, zone: c.to_zone,
+                    skill: c.to_skill, position: c.to_position, status: c.status
+                }));
+
+                if (all.length === 0) {
+                    el.innerHTML = '<p class="text-muted small">No connections yet. Find players to connect!</p>';
+                    return;
+                }
+
+                el.innerHTML = all.map(c => `
+                    <div class="d-flex justify-content-between align-items-center mb-3 pb-2" style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+                        <div>
+                            <strong>${c.name}</strong> <small class="text-muted">• ${c.zone}</small>
+                            <br><small class="text-muted">${c.type === 'incoming' ? '← Wants to connect' : '→ Request sent'}</small>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="conn-badge conn-${c.status}">${c.status}</span>
+                            ${c.type === 'incoming' && c.status === 'pending' ? `
+                                <button class="btn btn-success btn-sm" onclick="respondConnection(${c.id}, 'accept')">✓</button>
+                                <button class="btn btn-outline-light btn-sm" onclick="respondConnection(${c.id}, 'reject')">✗</button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `).join('');
+            } catch (err) {
+                document.getElementById('connectionsList').innerHTML = '<p class="text-muted small">Could not load connections.</p>';
+            }
+        }
+
+        // Accept/Reject connection
+        async function respondConnection(id, action) {
+            await fetch(`/api/connections/${id}/${action}`, { method: 'PUT', headers: AUTH.headers() });
+            loadConnections();
+        }
+
+        // Toggle edit
+        function toggleEdit() {
+            const el = document.getElementById('editSection');
+            el.style.display = el.style.display === 'block' ? 'none' : 'block';
+        }
+
+        // Save profile
+        async function saveProfile() {
+            try {
+                const res = await fetch(`/api/players/${currentPlayer.id}`, {
+                    method: 'PUT',
+                    headers: AUTH.headers(),
+                    body: JSON.stringify({
+                        name: document.getElementById('editName').value.trim(),
+                        zone: document.getElementById('editZone').value,
+                        skill_level: parseInt(document.getElementById('editSkill').value),
+                        position: document.getElementById('editPosition').value,
+                        bio: document.getElementById('editBio').value.trim()
+                    })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error);
+
+                AUTH.save(AUTH.getToken(), data.player);
+                currentPlayer = data.player;
+                loadProfile();
+                toggleEdit();
+            } catch (err) {
+                alert(err.message);
+            }
+        }
+
+        // Load my events
+        async function loadEvents() {
+            try {
+                const res = await fetch('/api/events/my/list', { headers: AUTH.headers() });
+                const data = await res.json();
+                const el = document.getElementById('eventsList');
+                const all = [];
+
+                (data.hosted || []).forEach(ev => all.push({ ...ev, role: 'host' }));
+                (data.joined || []).forEach(ev => all.push({ ...ev, role: 'joined' }));
+
+                if (all.length === 0) {
+                    el.innerHTML = '<p class="text-muted small">No events yet. <a href="events.html" style="color:var(--neon-green)">Host or join a game!</a></p>';
+                    return;
+                }
+
+                el.innerHTML = all.map(ev => `
+                    <div class="booking-item">
+                        <div class="d-flex justify-content-between">
+                            <strong>${ev.turf_emoji || '\u26bd'} ${ev.title}</strong>
+                            <span class="conn-badge ${ev.status === 'open' ? 'conn-accepted' : ev.status === 'full' ? 'conn-pending' : 'conn-rejected'}">
+                                ${ev.role === 'host' ? '\ud83c\udfaf Host' : '\u2705 Joined'} \u2022 ${ev.status}
+                            </span>
+                        </div>
+                        <small class="text-muted">${ev.date} at ${ev.time} \u2022 ${ev.filled_slots}/${ev.total_slots} players${ev.turf_name ? ' \u2022 ' + ev.turf_name : ''}</small>
+                    </div>
+                `).join('');
+            } catch (err) {
+                document.getElementById('eventsList').innerHTML = '<p class="text-muted small">Could not load events.</p>';
+            }
+        }
+
+        // Init
+        loadProfile();
+        loadBookings();
+        loadConnections();
+        loadEvents();
+    </script>
+</body>
+
+</html>

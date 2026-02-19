@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Players | PlayMate</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        #loading-screen {
+            height: 80vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        #results-section {
+            display: none;
+            margin-top: 80px;
+            padding-bottom: 60px;
+        }
+
+        #no-login-section {
+            display: none;
+            margin-top: 100px;
+            text-align: center;
+        }
+
+        .spinner-border {
+            width: 5rem;
+            height: 5rem;
+            border-width: 0.3em;
+            color: var(--neon-green);
+        }
+
+        .match-percent {
+            font-size: 1.8rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--neon-green), #00ff88);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .match-percent.medium {
+            background: linear-gradient(135deg, #ffcc00, #ff9900);
+            -webkit-background-clip: text;
+            background-clip: text;
+        }
+
+        .match-percent.low {
+            background: linear-gradient(135deg, #ff6666, #ff3333);
+            -webkit-background-clip: text;
+            background-clip: text;
+        }
+
+        .position-tag {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: rgba(57, 255, 20, 0.1);
+            border: 1px solid rgba(57, 255, 20, 0.3);
+            color: var(--neon-green);
+        }
+
+        .skill-dots {
+            display: flex;
+            gap: 3px;
+            align-items: center;
+        }
+
+        .skill-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .skill-dot.filled {
+            background: var(--neon-green);
+            box-shadow: 0 0 5px rgba(57, 255, 20, 0.5);
+        }
+
+        .connected-btn {
+            background: rgba(57, 255, 20, 0.1) !important;
+            border: 1px solid var(--neon-green) !important;
+            color: var(--neon-green) !important;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold d-flex align-items-center" href="index.html">
+                <img src="logo.png" width="40" height="40" class="me-2"> PlayMate
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="booking.html">Book Turf</a></li>
+                    <li class="nav-item"><a class="nav-link" href="events.html">🔴 Events</a></li>
+                    <li class="nav-item"><a class="nav-link" href="chat.html">💬 Chat</a></li>
+                    <ul id="navAuthArea" class="navbar-nav"></ul>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div id="loading-screen">
+            <div class="spinner-border" role="status"></div>
+            <h3 class="mt-4 fw-bold" style="color: var(--neon-green); letter-spacing: 2px;">SCANNING GRID...</h3>
+            <p class="text-muted mt-2">Triangulating Skills • Parsing Location</p>
+        </div>
+
+        <div id="no-login-section">
+            <h1 style="font-size: 5rem;">👤</h1>
+            <h3 class="fw-bold mb-3">Login Required</h3>
+            <p class="text-muted mb-4">Create your profile first to find matching players.</p>
+            <a href="login.html" class="btn btn-success btn-lg px-5">LOGIN / REGISTER</a>
+        </div>
+
+        <div id="results-section">
+            <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+                <div>
+                    <h3 class="mb-0">🔥 Matches for <span style="color: var(--neon-green)"
+                            id="playerNameDisplay"></span></h3>
+                    <small class="text-muted">Zone: <span id="playerZoneDisplay"></span></small>
+                </div>
+                <a href="booking.html" class="btn btn-outline-light">Skip to Booking →</a>
+            </div>
+            <div class="row" id="matchesGrid"></div>
+            <div id="emptyState" class="text-center py-5" style="display: none;">
+                <h1 style="font-size: 4rem;">😔</h1>
+                <h4 class="fw-bold mb-2">No Matches Yet</h4>
+                <p class="text-muted">No other players registered yet. Share the app!</p>
+                <a href="booking.html" class="btn btn-success btn-lg mt-3">Book a Turf Instead</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="auth.js"></script>
+    <script>
+        AUTH.updateNavbar();
+
+        window.onload = async function () {
+            if (!AUTH.isLoggedIn()) {
+                document.getElementById('loading-screen').style.display = 'none';
+                document.getElementById('no-login-section').style.display = 'block';
+                return;
+            }
+
+            const player = AUTH.getPlayer();
+
+            try {
+                const res = await fetch(`/api/players/match/${player.id}`, { headers: AUTH.headers() });
+                if (!res.ok) throw new Error('Failed to fetch matches');
+                const data = await res.json();
+
+                setTimeout(() => {
+                    document.getElementById('loading-screen').style.display = 'none';
+                    document.getElementById('results-section').style.display = 'block';
+                    document.getElementById('playerNameDisplay').textContent = data.player.name;
+                    document.getElementById('playerZoneDisplay').textContent = data.player.zone;
+
+                    if (data.matches.length === 0) {
+                        document.getElementById('emptyState').style.display = 'block';
+                        return;
+                    }
+                    renderMatches(data.matches);
+                }, 2500);
+            } catch (err) {
+                console.error(err);
+                setTimeout(() => {
+                    document.getElementById('loading-screen').style.display = 'none';
+                    document.getElementById('results-section').style.display = 'block';
+                    document.getElementById('matchesGrid').innerHTML = `
+                        <div class="col-12 text-center py-5">
+                            <h4 class="text-danger">⚠️ Connection Error</h4>
+                            <p class="text-muted">Could not reach the server.</p>
+                        </div>`;
+                }, 1500);
+            }
+        };
+
+        function renderMatches(matches) {
+            const grid = document.getElementById('matchesGrid');
+            grid.innerHTML = '';
+
+            matches.forEach((m, i) => {
+                const percentClass = m.match_percent >= 75 ? '' : m.match_percent >= 50 ? 'medium' : 'low';
+                const skillDots = Array.from({ length: 10 }, (_, idx) =>
+                    `<div class="skill-dot ${idx < m.skill_level ? 'filled' : ''}"></div>`
+                ).join('');
+
+                const isConnected = m.connection_status === 'connected';
+
+                const card = document.createElement('div');
+                card.className = 'col-md-6 col-lg-4';
+                card.style.animation = `fadeIn 0.5s ease ${i * 0.1}s both`;
+                card.innerHTML = `
+                    <div class="match-card p-4 mb-4">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <h5 class="mb-1 fw-bold">${m.name}</h5>
+                                <small class="text-muted">📍 ${m.zone}</small>
+                            </div>
+                            <div class="match-percent ${percentClass}">${m.match_percent}%</div>
+                        </div>
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <span class="position-tag">${m.position}</span>
+                            <div class="skill-dots">${skillDots}</div>
+                        </div>
+                        ${m.bio ? `<p class="text-muted small mb-3">"${m.bio}"</p>` : ''}
+                        <button class="btn ${isConnected ? 'connected-btn' : 'btn-success'} w-100"
+                            ${isConnected ? 'disabled' : ''}
+                            onclick="connectPlayer(this, ${m.id})">
+                            ${isConnected ? '✓ Connected' : 'Connect'}
+                        </button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        async function connectPlayer(btn, toId) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>';
+
+            try {
+                const res = await fetch('/api/connections', {
+                    method: 'POST',
+                    headers: AUTH.headers(),
+                    body: JSON.stringify({ to_player_id: toId })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error);
+
+                btn.innerHTML = '✓ Request Sent';
+                btn.classList.remove('btn-success');
+                btn.classList.add('connected-btn');
+            } catch (err) {
+                btn.innerHTML = err.message.includes('already') ? '✓ Connected' : 'Error';
+                btn.classList.remove('btn-success');
+                btn.classList.add('btn-outline-light');
+            }
+        }
+    </script>
+</body>
+
+</html>

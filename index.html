@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FOOTBALL FOR BHUBANESWAR</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div id="preloader">
+        <img src="logo.png" alt="Loading..." class="preloader-logo">
+    </div>
+
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold d-flex align-items-center" href="#">
+                <img src="logo.png" alt="Logo" width="40" height="40" class="me-2">
+                PlayMate
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link active" href="#">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="match.html">Find Players</a></li>
+                    <li class="nav-item"><a class="nav-link" href="booking.html">Book Turf</a></li>
+                    <li class="nav-item"><a class="nav-link" href="events.html">🔴 Events</a></li>
+                    <li class="nav-item"><a class="nav-link" href="chat.html">💬 Chat</a></li>
+                    <ul id="navAuthArea" class="navbar-nav"></ul>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <section class="hero-section">
+        <img src="character_hero.png" class="vector-char char-hero" alt="Vector Character"
+            onerror="this.style.display='none'">
+
+        <div class="container position-relative z-1">
+            <div class="badge bg-dark border border-success text-success mb-3 px-3 py-2 rounded-pill shadow-lg">
+                🚀 #1 Sports AI in Bhubaneswar
+            </div>
+
+            <h1 class="display-2 fw-black mb-3" style="font-weight: 900;">
+                FOOTBALL IN <br>
+                <span style="color: var(--neon-green); text-shadow: 0 0 20px rgba(57,255,20,0.5);">BHUBANESWAR</span>
+            </h1>
+            <p class="lead mb-5 text-muted" style="max-width: 600px; margin: 0 auto;">
+                Don't play alone. Use our AI to find teammates in Patia, Jaydev Vihar & Khandagiri.
+            </p>
+
+            <div class="d-flex justify-content-center gap-3" id="heroButtons">
+                <!-- Buttons set dynamically -->
+            </div>
+        </div>
+    </section>
+
+    <div class="marquee-container">
+        <div class="marquee-content">
+            <span class="marquee-item">⚡ KICK OFF TURF PATIA</span>
+            <span class="marquee-item">⚡ THE ARENA JAYDEV VIHAR</span>
+            <span class="marquee-item">⚡ SOCCER CITY KHANDAGIRI</span>
+            <span class="marquee-item">⚡ ITER SPORTS GROUND</span>
+            <span class="marquee-item">⚡ KIIT STADIUM</span>
+            <span class="marquee-item">⚡ KICK OFF TURF PATIA</span>
+            <span class="marquee-item">⚡ THE ARENA JAYDEV VIHAR</span>
+            <span class="marquee-item">⚡ SOCCER CITY KHANDAGIRI</span>
+        </div>
+    </div>
+
+    <section class="py-5">
+        <div class="container">
+            <div class="row g-3 text-center" id="statsRow">
+                <div class="col-4">
+                    <div class="card p-3">
+                        <h2 class="fw-bold mb-0" id="statTurfs">-</h2>
+                        <small class="text-muted">Turfs</small>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="card p-3" style="border-color: var(--neon-green) !important;">
+                        <h2 class="fw-bold mb-0" id="statBookings" style="color: var(--neon-green)">-</h2>
+                        <small class="text-muted">Active Bookings</small>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="card p-3">
+                        <h2 class="fw-bold text-white mb-0" id="statPlayers">-</h2>
+                        <small class="text-muted">Players</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="py-5">
+        <div class="container">
+            <h2 class="text-center mb-5 fw-bold display-5">SYSTEM FLOW</h2>
+            <div class="row text-center">
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100 p-4">
+                        <div class="card-body">
+                            <h1 class="text-success mb-3" style="font-size: 4rem;">👤</h1>
+                            <h4>CREATE ID</h4>
+                            <p class="text-muted">Set location & skill level.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100 p-4">
+                        <div class="card-body">
+                            <h1 class="text-success mb-3" style="font-size: 4rem;">⚡</h1>
+                            <h4>AI MATCH</h4>
+                            <p class="text-muted">Algorithm scans for teammates.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100 p-4">
+                        <div class="card-body">
+                            <h1 class="text-success mb-3" style="font-size: 4rem;">🏟️</h1>
+                            <h4>GAME ON</h4>
+                            <p class="text-muted">Book slot & play.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Live Events Preview -->
+    <section class="py-5" style="border-top: 1px solid rgba(255,255,255,0.05);">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="fw-bold mb-0"><span
+                        style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#ff3333;animation:pulse-dot 1.5s infinite;margin-right:8px;"></span>LIVE
+                    EVENTS</h2>
+                <a href="events.html" class="btn btn-outline-light btn-sm">View All →</a>
+            </div>
+            <div class="row g-4" id="eventsPreview">
+                <div class="col-12 text-center py-4">
+                    <p class="text-muted">Loading events...</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    <style>
+        @keyframes pulse-dot {
+
+            0%,
+            100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: 0.3
+            }
+        }
+
+        .event-preview-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 20px;
+            transition: all 0.3s;
+        }
+
+        .event-preview-card:hover {
+            border-color: rgba(57, 255, 20, 0.3);
+        }
+    </style>
+
+    <footer class="bg-black text-white py-4 text-center border-top border-secondary">
+        <p class="mb-0 text-muted">&copy; 2025 BBSR Turf Connect. Built for the Game.</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="auth.js"></script>
+    <script>
+        // Preloader
+        window.addEventListener('load', function () {
+            const preloader = document.getElementById('preloader');
+            setTimeout(() => {
+                preloader.style.opacity = '0';
+                setTimeout(() => preloader.style.display = 'none', 500);
+            }, 1500);
+        });
+
+        // Auth-aware navbar
+        AUTH.updateNavbar();
+
+        // Dynamic hero buttons
+        const heroButtons = document.getElementById('heroButtons');
+        if (AUTH.isLoggedIn()) {
+            heroButtons.innerHTML = `
+                <a href="match.html" class="btn btn-success btn-lg px-5 py-3">Find Teammates</a>
+                <a href="booking.html" class="btn btn-outline-light btn-lg px-5 py-3">Book Turf</a>
+            `;
+        } else {
+            heroButtons.innerHTML = `
+                <a href="login.html" class="btn btn-success btn-lg px-5 py-3">Join Now</a>
+                <a href="booking.html" class="btn btn-outline-light btn-lg px-5 py-3">Book Turf</a>
+            `;
+        }
+
+        // Live stats from API
+        async function loadStats() {
+            try {
+                const [turfsRes, playersRes] = await Promise.all([
+                    fetch('/api/turfs'),
+                    fetch('/api/players')
+                ]);
+                const turfs = await turfsRes.json();
+                const players = await playersRes.json();
+
+                document.getElementById('statTurfs').textContent = turfs.length + '+';
+                document.getElementById('statPlayers').textContent = players.count;
+                document.getElementById('statBookings').textContent = '⚡';
+            } catch (e) {
+                document.getElementById('statTurfs').textContent = '3+';
+                document.getElementById('statPlayers').textContent = '0';
+                document.getElementById('statBookings').textContent = '0';
+            }
+        }
+        loadStats();
+
+        // Load live events preview
+        async function loadEventsPreview() {
+            try {
+                const res = await fetch('/api/events');
+                const events = await res.json();
+                const el = document.getElementById('eventsPreview');
+
+                if (events.length === 0) {
+                    el.innerHTML = `<div class="col-12 text-center py-4">
+                        <p class="text-muted">No upcoming events. <a href="events.html" style="color:var(--neon-green)">Host one!</a></p>
+                    </div>`;
+                    return;
+                }
+
+                el.innerHTML = events.slice(0, 3).map(ev => {
+                    const spots = ev.total_slots - ev.filled_slots;
+                    const pct = (ev.filled_slots / ev.total_slots) * 100;
+                    const dateObj = new Date(ev.date + 'T' + ev.time);
+                    const dateStr = dateObj.toLocaleDateString('en-IN', { weekday: 'short', month: 'short', day: 'numeric' });
+                    const timeStr = dateObj.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+                    return `
+                        <div class="col-md-4">
+                            <div class="event-preview-card">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <h6 class="fw-bold mb-0">${ev.title}</h6>
+                                    <small style="background:rgba(57,255,20,0.1);color:var(--neon-green);padding:2px 8px;border-radius:10px;font-weight:700;font-size:0.7rem;">${ev.format}</small>
+                                </div>
+                                <small class="text-muted d-block mb-2">📅 ${dateStr} • 🕐 ${timeStr}</small>
+                                ${ev.turf_name ? `<small class="text-muted d-block mb-2">${ev.turf_emoji || '🏟️'} ${ev.turf_name}</small>` : ''}
+                                <div style="height:5px;border-radius:3px;background:rgba(255,255,255,0.08);overflow:hidden;margin-bottom:8px;">
+                                    <div style="height:100%;width:${pct}%;border-radius:3px;background:${spots <= 2 ? '#ffc800' : 'var(--neon-green)'};"></div>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <small class="fw-bold">${ev.filled_slots}/${ev.total_slots} players</small>
+                                    <small style="color:${spots <= 0 ? '#ff5555' : spots <= 2 ? '#ffc800' : 'var(--neon-green)'};font-weight:700;">${spots <= 0 ? 'FULL' : spots + ' left'}</small>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (e) {
+                document.getElementById('eventsPreview').innerHTML = '';
+            }
+        }
+        loadEventsPreview();
+    </script>
+</body>
+
+</html>
