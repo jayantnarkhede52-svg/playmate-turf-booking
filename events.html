@@ -361,6 +361,7 @@
         async function loadEvents() {
             try {
                 const res = await fetch('/api/events');
+                if (res.status === 401) { AUTH.logout(); return; }
                 const events = await res.json();
                 const grid = document.getElementById('eventsGrid');
 
@@ -458,6 +459,7 @@
         async function joinEvent(eventId) {
             try {
                 const res = await fetch(`/api/events/${eventId}/join`, { method: 'POST', headers: AUTH.headers() });
+                if (res.status === 401) { AUTH.logout(); return; }
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.error);
 
@@ -472,6 +474,7 @@
             if (!confirm('Leave this game?')) return;
             try {
                 const res = await fetch(`/api/events/${eventId}/leave`, { method: 'POST', headers: AUTH.headers() });
+                if (res.status === 401) { AUTH.logout(); return; }
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.error);
 
@@ -500,6 +503,7 @@
                 const res = await fetch('/api/events', {
                     method: 'POST', headers: AUTH.headers(), body: JSON.stringify(body)
                 });
+                if (res.status === 401) { AUTH.logout(); return; }
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.error);
 

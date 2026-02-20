@@ -81,6 +81,17 @@ module.exports = function (db, tokenStore) {
             if (!to_id || !content?.trim()) return res.status(400).json({ error: 'to_id and content required' });
             if (to_id === fromId) return res.status(400).json({ error: 'Cannot message yourself' });
 
+            // Verify connection
+            const connection = db.prepare(`
+                SELECT * FROM connections 
+                WHERE ((from_player_id = ? AND to_player_id = ?) OR (from_player_id = ? AND to_player_id = ?))
+                AND status = 'accepted'
+            `).get(fromId, to_id, to_id, fromId);
+
+            if (!connection) {
+                return res.status(403).json({ error: 'You can only message connected players' });
+            }
+
             const result = db.prepare('INSERT INTO messages (from_id, to_id, content) VALUES (?, ?, ?)')
                 .run(fromId, parseInt(to_id), content.trim());
 

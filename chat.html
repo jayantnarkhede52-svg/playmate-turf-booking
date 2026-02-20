@@ -530,14 +530,26 @@
 
             searchTimeout = setTimeout(async () => {
                 try {
-                    const res = await fetch('/api/players', { headers: AUTH.headers() });
-                    const players = await res.json();
-                    const filtered = players.filter(p =>
-                        p.id !== myId && p.name.toLowerCase().includes(q.toLowerCase())
+                    // Fetch existing connections first
+                    const res = await fetch('/api/connections/my', { headers: AUTH.headers() });
+                    const data = await res.json();
+
+                    // Combine incoming and outgoing accepted connections
+                    const accepted = [
+                        ...data.incoming.filter(c => c.status === 'accepted').map(c => ({
+                            id: c.from_player_id, name: c.from_name, zone: c.from_zone, position: c.from_position
+                        })),
+                        ...data.outgoing.filter(c => c.status === 'accepted').map(c => ({
+                            id: c.to_player_id, name: c.to_name, zone: c.to_zone, position: c.to_position
+                        }))
+                    ];
+
+                    const filtered = accepted.filter(p =>
+                        p.name.toLowerCase().includes(q.toLowerCase())
                     ).slice(0, 6);
 
                     document.getElementById('searchResults').innerHTML = filtered.length === 0
-                        ? '<p class="text-muted small p-2">No players found</p>'
+                        ? '<p class="text-muted small p-2">No connected players found</p>'
                         : filtered.map(p => `
                             <div class="search-item" onclick="startChatWith(${p.id}, '${p.name.replace(/'/g, "\\'")}', '${p.zone} • ${p.position}')">
                                 <strong>${p.name}</strong> <small class="text-muted">• ${p.zone} • ${p.position}</small>
