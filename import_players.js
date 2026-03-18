@@ -17,16 +17,38 @@ function importData() {
 
     const csvData = fs.readFileSync(CSV_PATH, 'utf8');
     const lines = csvData.split('\n');
-    const headers = lines[0].split(',');
+    
+    // Very simple CSV parser for quoted fields
+    function parseCSVLine(line) {
+        const result = [];
+        let current = '';
+        let inQuotes = false;
+        for (let i = 0; i < line.length; i++) {
+            const char = line[i];
+            if (char === '"') {
+                inQuotes = !inQuotes;
+            } else if (char === ',' && !inQuotes) {
+                result.push(current.trim());
+                current = '';
+            } else {
+                current += char;
+            }
+        }
+        result.push(current.trim());
+        return result;
+    }
 
-    // Map headers to indices
+    const headers = parseCSVLine(lines[0]);
+    console.log('Detected Headers:', headers);
+
     const nameIdx = headers.indexOf('Player_name');
     const posIdx = headers.indexOf('Positions');
     const skillIdx = headers.indexOf('Overall');
     const nationIdx = headers.indexOf('National_team');
 
     const passHash = bcrypt.hashSync('password123', 10);
-    const zones = ['Patia', 'Jaydev Vihar', 'Khandagiri', 'Jagamara'];
+    const zones = ['Patia', 'Jaydev Vihar', 'Khandagiri', 'Jagamara', 'KIIT Campus', 'Infocity', 'Chandrasekharpur', 'Saheed Nagar'];
+    const positionsList = ['Forward', 'Midfielder', 'Defender', 'Goalkeeper'];
 
     const insertStmt = db.prepare(`
         INSERT OR IGNORE INTO players (name, phone, password_hash, zone, skill_level, position, bio)
@@ -34,38 +56,51 @@ function importData() {
     `);
 
     let importedCount = 0;
-
-    // Start from line 1 (skip headers), limit to 100 players
-    const limit = Math.min(lines.length, 101);
+    // We want at least 400 players. Let's aim for 450 if available.
+    const limit = Math.min(lines.length, 500);
 
     db.transaction(() => {
         for (let i = 1; i < limit; i++) {
             const line = lines[i];
             if (!line.trim()) continue;
 
-            const cols = line.split(',');
+            const cols = parseCSVLine(line);
             if (cols.length < headers.length) continue;
 
-            const name = cols[nameIdx];
-            const rawSkill = parseInt(cols[skillIdx]);
-            // skill_level should be between 1 and 10
-            const skillLevel = Math.max(1, Math.min(10, Math.round(rawSkill / 10)));
-            const positions = cols[posIdx].replace(/"/g, '').split(' ');
-            const position = positions[0] || 'Any';
-            const phone = '9' + Math.floor(100000000 + Math.random() * 900000000);
+            const name = cols[nameIdx] || 'Unknown Player';
+            const rawSkill = parseInt(cols[skillIdx]) || 50;
+            
+            // skill_level: Scale 0-100 to 1-10
+            let skillLevel = Math.max(1, Math.min(10, Math.round(rawSkill / 10)));
+            // Add some randomness to skill (+/- 1)
+            skillLevel = Math.max(1, Math.min(10, skillLevel + (Math.random() > 0.5 ? 1 : -1)));
+
+            // Position mapping
+            let position = 'Any';
+            const rawPos = (cols[posIdx] || '').replace(/[\[\]']/g, '').split(',')[0].trim();
+            if (rawPos.includes('ST') || rawPos.includes('RW') || rawPos.includes('LW') || rawPos.includes('CF')) position = 'Forward';
+            else if (rawPos.includes('CM') || rawPos.includes('CDM') || rawPos.includes('CAM') || rawPos.includes('LM') || rawPos.includes('RM')) position = 'Midfielder';
+            else if (rawPos.includes('CB') || rawPos.includes('LB') || rawPos.includes('RB') || rawPos.includes('LWB') || rawPos.includes('RWB')) position = 'Defender';
+            else if (rawPos.includes('GK')) position = 'Goalkeeper';
+            else position = positionsList[Math.floor(Math.random() * positionsList.length)];
+
+            // Phone: Unique 10 digits
+            const phone = '9' + (100000000 + importedCount).toString().padStart(9, '0');
             const zone = zones[Math.floor(Math.random() * zones.length)];
-            const bio = `Professional player from ${cols[nationIdx]}. Ratings: ${rawSkill} OVR.`;
+            const nation = cols[nationIdx] || 'International';
+            const bio = `Professional player from ${nation}. Rated ${rawSkill} OVR. Specialized in ${position} play. Seeking local teammates in ${zone}.`;
 
             try {
                 insertStmt.run(name, phone, passHash, zone, skillLevel, position, bio);
                 importedCount++;
             } catch (err) {
-                // Skip if error (e.g. unique constraint)
+                console.error(`Error inserting ${name}:`, err.message);
             }
         }
     })();
 
-    console.log(`✅ Successfully imported ${importedCount} players!`);
+    console.log(`\n✅ SUCCESSFULLY IMPORTED ${importedCount} PLAYERS!`);
+    console.log(`📍 Database updated: ${DB_PATH}`);
 }
 
 importData();

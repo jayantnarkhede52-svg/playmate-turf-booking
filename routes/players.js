@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const ML = require('../ml-utils');
 
 module.exports = function (db, tokenStore) {
 
@@ -93,7 +94,6 @@ module.exports = function (db, tokenStore) {
             const player = db.prepare('SELECT * FROM players WHERE id = ?').get(req.params.id);
             if (!player) return res.status(404).json({ error: 'Player not found' });
 
-            // Get existing connections for this player
             const playerId = getPlayerId(req);
             let connectedIds = [];
             if (playerId) {
@@ -103,31 +103,45 @@ module.exports = function (db, tokenStore) {
                 `).all(playerId, playerId, playerId).map(c => c.other_id);
             }
 
-            const matches = db.prepare(`
-                SELECT id, name, zone, skill_level, position, bio,
-                    ABS(skill_level - ?) AS skill_diff,
-                    CASE WHEN zone = ? THEN 30 ELSE 0 END AS zone_score
-                FROM players
-                WHERE id != ? AND is_admin = 0
-                ORDER BY zone_score DESC, skill_diff ASC
-                LIMIT 20
-            `).all(player.skill_level, player.zone, player.id);
+            // Get all potential candidates
+            const candidates = db.prepare('SELECT id, name, zone, skill_level, position, bio FROM players WHERE id != ? AND is_admin = 0').all(player.id);
 
-            const results = matches.map(m => {
-                const skillMatch = Math.max(0, 100 - (m.skill_diff * 15));
-                const zoneMatch = m.zone_score > 0 ? 100 : 40;
-                const totalMatch = Math.round((skillMatch * 0.5) + (zoneMatch * 0.5));
+            // ML Matching Logic
+            const playerVector = [
+                ML.normalize(player.skill_level, 1, 10),
+                ML.encodePosition(player.position)
+            ];
+
+            const results = candidates.map(c => {
+                const candidateVector = [
+                    ML.normalize(c.skill_level, 1, 10),
+                    ML.encodePosition(c.position)
+                ];
+
+                // Calculate Similarity (Weights: Skill=0.7, Position=0.3)
+                const similarity = ML.cosineSimilarity(playerVector, candidateVector, [0.7, 0.3]);
+                const zoneBonus = ML.zoneMatchScore(player.zone, c.zone);
+
+                // Combine similarity with zone match (60% similarity, 40% zone)
+                const finalScore = Math.round(((similarity * 0.6) + (zoneBonus * 0.4)) * 100);
+
+                // Generate Insights
+                const insights = [];
+                if (c.zone === player.zone) insights.push("Same Zone");
+                if (Math.abs(c.skill_level - player.skill_level) <= 1) insights.push("Similar Skill");
+                if (c.position === player.position) insights.push("Same Position");
 
                 return {
-                    id: m.id, name: m.name, zone: m.zone,
-                    skill_level: m.skill_level, position: m.position, bio: m.bio,
-                    match_percent: totalMatch,
-                    connection_status: connectedIds.includes(m.id) ? 'connected' : null
+                    id: c.id, name: c.name, zone: c.zone,
+                    skill_level: c.skill_level, position: c.position, bio: c.bio,
+                    match_percent: Math.min(100, finalScore),
+                    insights,
+                    connection_status: connectedIds.includes(c.id) ? 'connected' : null
                 };
             });
 
             results.sort((a, b) => b.match_percent - a.match_percent);
-            res.json({ player: { id: player.id, name: player.name, zone: player.zone }, matches: results });
+            res.json({ player: { id: player.id, name: player.name, zone: player.zone }, matches: results.slice(0, 20) });
         } catch (err) {
             console.error('Match error:', err);
             res.status(500).json({ error: 'Internal server error' });

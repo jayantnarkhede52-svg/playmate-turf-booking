@@ -30,18 +30,30 @@ module.exports = function (db, tokenStore) {
             const date = req.query.date;
             if (!date) return res.status(400).json({ error: 'date query param required' });
 
-            // All possible slots
-            const allSlots = ['4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM', '8:00 PM', '9:00 PM'];
+            // All possible slots with base demand multipliers
+            const allSlots = [
+                { time: '4:00 PM', multiplier: 1.0 },
+                { time: '5:00 PM', multiplier: 1.0 },
+                { time: '6:00 PM', multiplier: 1.2 }, // Evening starts picking up
+                { time: '7:00 PM', multiplier: 1.5 }, // Peak hour
+                { time: '8:00 PM', multiplier: 1.5 }, // Peak hour
+                { time: '9:00 PM', multiplier: 1.3 }  // Tapering off
+            ];
 
             // Get booked slots for this turf+date
             const bookedSlots = db.prepare(
                 'SELECT slot FROM bookings WHERE turf_id = ? AND date = ? AND status = ?'
             ).all(req.params.id, date, 'confirmed').map(b => b.slot);
 
-            const slots = allSlots.map(s => ({
-                time: s,
-                available: !bookedSlots.includes(s)
-            }));
+            const slots = allSlots.map(s => {
+                const isBooked = bookedSlots.includes(s.time);
+                return {
+                    time: s.time,
+                    available: !isBooked,
+                    price: Math.round(turf.price_per_hour * s.multiplier),
+                    demand: s.multiplier >= 1.5 ? 'High' : s.multiplier >= 1.2 ? 'Medium' : 'Normal'
+                };
+            });
 
             res.json({ turf, date, slots });
         } catch (err) {

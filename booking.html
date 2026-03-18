@@ -233,22 +233,34 @@
                 const res = await fetch(`/api/turfs/${turfId}/slots?date=${date}`, { headers: AUTH.headers() });
                 const data = await res.json();
 
-                document.getElementById('slotsContainer').innerHTML = data.slots.map(s => `
-                    <button class="btn slot-btn ${s.available ? '' : 'booked'}"
-                        ${s.available ? '' : 'disabled'}
-                        onclick="selectSlot(this, '${s.time}')">
-                        ${s.time} ${s.available ? '' : '(Booked)'}
-                    </button>
-                `).join('');
+                document.getElementById('slotsContainer').innerHTML = data.slots.map(s => {
+                    const demandClass = s.demand === 'High' ? 'bg-danger' : s.demand === 'Medium' ? 'bg-warning text-dark' : 'bg-secondary';
+                    const activeClass = s.available ? '' : 'booked';
+
+                    return `
+                        <div class="d-flex flex-column align-items-center mb-3">
+                            <button class="btn slot-btn ${activeClass}"
+                                ${s.available ? '' : 'disabled'}
+                                onclick="selectSlot(this, '${s.time}', ${s.price})">
+                                ${s.time}
+                            </button>
+                            <div class="small mt-1">
+                                <span class="badge ${demandClass}" style="font-size: 0.6rem;">${s.demand} Demand</span>
+                                <div class="fw-bold text-success mt-1">₹${s.price}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
             } catch (err) {
                 document.getElementById('slotsContainer').innerHTML = '<p class="text-danger">Failed to load slots</p>';
             }
         }
 
-        function selectSlot(btn, time) {
+        function selectSlot(btn, time, price) {
             document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             selectedSlot = time;
+            document.getElementById('confirmBtn').textContent = `Confirm Booking (₹${price})`;
         }
 
         async function confirmBooking() {

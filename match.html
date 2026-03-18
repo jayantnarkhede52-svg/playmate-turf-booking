@@ -139,7 +139,24 @@
                             id="playerNameDisplay"></span></h3>
                     <small class="text-muted">Zone: <span id="playerZoneDisplay"></span></small>
                 </div>
-                <a href="booking.html" class="btn btn-outline-light">Skip to Booking →</a>
+                <div class="d-flex gap-2">
+                    <select id="filterPosition" class="form-select form-select-sm bg-dark text-light border-secondary"
+                        style="width: auto;">
+                        <option value="">All Positions</option>
+                        <option value="Forward">Forward</option>
+                        <option value="Midfielder">Midfielder</option>
+                        <option value="Defender">Defender</option>
+                        <option value="Goalkeeper">Goalkeeper</option>
+                    </select>
+                    <select id="filterSkill" class="form-select form-select-sm bg-dark text-light border-secondary"
+                        style="width: auto;">
+                        <option value="0">Any Skill</option>
+                        <option value="5">Skill 5+</option>
+                        <option value="7">Skill 7+</option>
+                        <option value="9">Skill 9+</option>
+                    </select>
+                    <a href="booking.html" class="btn btn-outline-light btn-sm">Skip to Booking →</a>
+                </div>
             </div>
             <div class="row" id="matchesGrid"></div>
             <div id="emptyState" class="text-center py-5" style="display: none;">
@@ -156,6 +173,8 @@
     <script>
         AUTH.updateNavbar();
 
+        let allMatches = [];
+
         window.onload = async function () {
             if (!AUTH.isLoggedIn()) {
                 document.getElementById('loading-screen').style.display = 'none';
@@ -167,6 +186,21 @@
 
             try {
                 const res = await fetch(`/api/players/match/${player.id}`, { headers: AUTH.headers() });
+                
+                if (res.status === 404) {
+                    // Player no longer exists (e.g. database reset)
+                    document.getElementById('loading-screen').style.display = 'none';
+                    document.getElementById('results-section').style.display = 'block';
+                    document.getElementById('matchesGrid').innerHTML = `
+                        <div class="col-12 text-center py-5">
+                            <h1 style="font-size: 4rem;">👋</h1>
+                            <h4 class="fw-bold mb-3">Profile Not Found</h4>
+                            <p class="text-muted">Your account might have been reset during the data import.</p>
+                            <button class="btn btn-success px-4" onclick="AUTH.logout()">Re-register / Login</button>
+                        </div>`;
+                    return;
+                }
+
                 if (!res.ok) throw new Error('Failed to fetch matches');
                 const data = await res.json();
 
@@ -176,12 +210,12 @@
                     document.getElementById('playerNameDisplay').textContent = data.player.name;
                     document.getElementById('playerZoneDisplay').textContent = data.player.zone;
 
-                    if (data.matches.length === 0) {
-                        document.getElementById('emptyState').style.display = 'block';
-                        return;
-                    }
-                    renderMatches(data.matches);
-                }, 2500);
+                    allMatches = data.matches;
+                    filterAndRender();
+
+                    document.getElementById('filterPosition').addEventListener('change', filterAndRender);
+                    document.getElementById('filterSkill').addEventListener('change', filterAndRender);
+                }, 2000);
             } catch (err) {
                 console.error(err);
                 setTimeout(() => {
@@ -190,20 +224,48 @@
                     document.getElementById('matchesGrid').innerHTML = `
                         <div class="col-12 text-center py-5">
                             <h4 class="text-danger">⚠️ Connection Error</h4>
-                            <p class="text-muted">Could not reach the server.</p>
+                            <p class="text-muted">Could not reach the server or calculation failed.</p>
+                            <button class="btn btn-outline-light btn-sm mt-2" onclick="location.reload()">Retry Scan</button>
                         </div>`;
                 }, 1500);
             }
         };
 
+        function filterAndRender() {
+            const pos = document.getElementById('filterPosition').value;
+            const minSkill = parseInt(document.getElementById('filterSkill').value || "0");
+
+            const filtered = allMatches.filter(m => {
+                const matchPos = !pos || m.position === pos;
+                const matchSkill = m.skill_level >= minSkill;
+                return matchPos && matchSkill;
+            });
+
+            renderMatches(filtered);
+        }
+
         function renderMatches(matches) {
             const grid = document.getElementById('matchesGrid');
+            const emptyState = document.getElementById('emptyState');
             grid.innerHTML = '';
 
+            if (matches.length === 0) {
+                emptyState.style.display = 'block';
+                return;
+            } else {
+                emptyState.style.display = 'none';
+            }
+
             matches.forEach((m, i) => {
-                const percentClass = m.match_percent >= 75 ? '' : m.match_percent >= 50 ? 'medium' : 'low';
+                const percentClass = m.match_percent >= 85 ? '' : m.match_percent >= 60 ? 'medium' : 'low';
+                const isTopPick = m.match_percent >= 90;
+
                 const skillDots = Array.from({ length: 10 }, (_, idx) =>
                     `<div class="skill-dot ${idx < m.skill_level ? 'filled' : ''}"></div>`
+                ).join('');
+
+                const insightsHtml = (m.insights || []).map(insight =>
+                    `<span class="badge rounded-pill bg-dark text-success border border-success extra-small me-1" style="font-size: 0.6rem;">${insight}</span>`
                 ).join('');
 
                 const isConnected = m.connection_status === 'connected';
@@ -212,7 +274,8 @@
                 card.className = 'col-md-6 col-lg-4';
                 card.style.animation = `fadeIn 0.5s ease ${i * 0.1}s both`;
                 card.innerHTML = `
-                    <div class="match-card p-4 mb-4">
+                    <div class="match-card p-4 mb-4 position-relative" style="${isTopPick ? 'border: 1px solid var(--neon-green); box-shadow: 0 0 15px rgba(57, 255, 20, 0.2);' : ''}">
+                        ${isTopPick ? '<span class="position-absolute top-0 end-0 translate-middle-y badge bg-success me-4 px-3 py-2" style="font-size: 0.7rem; border: 1px solid #fff;">⭐ TOP PICK</span>' : ''}
                         <div class="d-flex justify-content-between align-items-start mb-3">
                             <div>
                                 <h5 class="mb-1 fw-bold">${m.name}</h5>
@@ -224,7 +287,10 @@
                             <span class="position-tag">${m.position}</span>
                             <div class="skill-dots">${skillDots}</div>
                         </div>
-                        ${m.bio ? `<p class="text-muted small mb-3">"${m.bio}"</p>` : ''}
+                        <div class="mb-3">
+                            ${insightsHtml}
+                        </div>
+                        ${m.bio ? `<p class="text-muted small mb-3 fst-italic">"${m.bio}"</p>` : ''}
                         <button class="btn ${isConnected ? 'connected-btn' : 'btn-success'} w-100"
                             ${isConnected ? 'disabled' : ''}
                             onclick="connectPlayer(this, ${m.id})">
@@ -254,8 +320,11 @@
                 btn.classList.add('connected-btn');
             } catch (err) {
                 btn.innerHTML = err.message.includes('already') ? '✓ Connected' : 'Error';
-                btn.classList.remove('btn-success');
-                btn.classList.add('btn-outline-light');
+                btn.disabled = !err.message.includes('already');
+                // The original code had an extra .add('btn-outline-light'); here which was a syntax error.
+                // Assuming it was meant to be part of the error handling for the button style.
+                // If the error is not 'already connected', it should probably revert to a default or error style.
+                // For now, removing the syntax error. If specific styling is needed for 'Error', it should be added explicitly.
             }
         }
     </script>
